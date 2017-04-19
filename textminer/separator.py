@@ -1,5 +1,6 @@
 import re
 
+
 def words(input):
     matches = re.findall(r'[A-Za-z0-9\-]*[A-Za-z][A-Za-z0-9]*', input)
     if len(matches) != 0:
@@ -7,42 +8,47 @@ def words(input):
 
 
 def phone_number(input):
-    nums = re.findall(r'\d', input)
-    if len(nums) == 10:
-        return dict([('area_code', ''.join(nums[:3]) ), ('number', ''.join(nums[3:6]) + '-' + ''.join(nums[6:]))])
+    m = re.search(r'[(]*(?P<area>[0-9]{3})[\D]*'
+                  r'(?P<first>[0-9]{3})[\D]*(?P<last>[0-9]{4})', input)
+    if m:
+        return {'area_code': m.group('area'),
+                'number': m.group('first') + "-" + m.group('last')}
+
+    return m
 
 
-# Unfinished
 def money(input):
-    currency = re.findall(r'\$', input)
-    if len(currency) == 1:
-        amount = re.findall(r'[\d\.]+', input)
-        if len(amount) > 0:
-            if currency[0] == '$' and amount[0].isdecimal():
-                return dict([('currency', currency[0]), ('amount', float(amount[0]))])
+    m = re.search(r'^(?P<curr>[$]{1})'
+                  r'(?P<amnt>[0-9]+([.]{1}[0-9]{2})*$'
+                  r'|([0-9]+([,]{1}[0-9]{3})+([.]{1}[0-9]{2})*))', input)
+    if m:
+        return {'currency': m.group('curr'),
+                'amount': float(re.sub(',', '',  m.group('amnt')))}
+    # return m
 
 
+def zipcode(text):
+    m = re.search(r'^(?P<first5>[0-9]{5})'
+                  r'([-](?P<plus4>[0-9]{4})){0,1}$', text)
+    if m:
+        return {'zip': m.group('first5'),
+                'plus4': m.group('plus4')}
+    # return m
 
-def zipcode(input):
-    if len(input) == 5 or len(input) == 10:
-        z_code = re.findall(r'^[0-9]{5}', input)
-        z_code = z_code[0]
-        if z_code == input:
-            plus4 = None
-        else:
-            plus4 = re.findall(r'[0-9]{4}$', input)
-            plus4 = plus4[0]
-        return dict([('zip', z_code), ('plus4', plus4)])
 
 def date(input):
-    if len(input) >= 8:
-        date = re.findall(r'\d*[^/-]', input)
-        if '/' in input:
-            month = int(date[0])
-            day = int(date[1])
-            year = int(date[2])
-        else:
-            month = int(date[1])
-            day = int(date[2])
-            year = int(date[0])
-        return dict([('month', month), ('day', day), ('year', year)])
+    pattern = r'(?P<month>[0-9]{1,2})(?P<day>[?/]{1}[0-9]+)(?P<year>[?/]{1}[0-9]+)'
+    m = re.search(pattern, input)
+
+
+    n = re.search(r'^(?P<year>[0-9]{4})'
+                  r'(?P<month>[-]{1}[0-9]{2})'
+                  r'(?P<day>[-]{1}[0-9]+)', input)
+    if m:
+        return {'month': int(re.sub('/', '',  m.group('month'))),
+                'day': int(re.sub('/', '',  m.group('day'))),
+                'year': int(re.sub('/', '',  m.group('year')))}
+    if n:
+        return {'month': int(re.sub('-', '',  n.group('month'))),
+                'day': int(re.sub('-', '',  n.group('day'))),
+                'year': int(re.sub('-', '',  n.group('year')))}
